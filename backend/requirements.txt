@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+sqlalchemy[asyncio]
+alembic
+celery
+redis
+pydantic
+pydantic-settings
+asyncpg
+psycopg2-binary
+requests
+httpx
+python-multipart
+websockets

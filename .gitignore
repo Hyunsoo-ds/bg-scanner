@@ -1,0 +1,32 @@
+# Environments
+.env
+
+# Dependencies
+node_modules/
+backend/venv/
+venv/
+__pycache__/
+*.pyc
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Build outputs
+frontend/dist/
+dist/
+build/
+
+# Python coverage and testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Debug files
+debug_output.txt

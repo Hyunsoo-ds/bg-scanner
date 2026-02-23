@@ -16,8 +16,8 @@ class Nuclei(BaseTool):
         if not target:
             return []
             
-        # Basic command: nuclei -u <target> -je - -silent
-        cmd = ["nuclei", "-u", target, "-je", "-", "-silent"]
+        # Basic command: nuclei -u <target> -j -silent
+        cmd = ["nuclei", "-u", target, "-j", "-silent"]
 
         # Add any additional flags if needed, e.g. for templates
         # cmd.extend(["-t", "cves", "-t", "vulnerabilities"]) # Example defaults?

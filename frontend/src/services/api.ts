@@ -73,6 +73,7 @@ export interface Vulnerability {
     description?: string;
     matcher_name?: string;
     extracted_results?: string;
+    path_url?: string;
 }
 
 // Pagination Response Interface
@@ -113,10 +114,11 @@ export const scanApi = {
         size = 50,
         search?: string,
         status_category?: string,
-        tool?: string
+        tool?: string,
+        port?: string
     ): Promise<PathListResponse> =>
         api.get<PathListResponse>(`/scans/${scanId}/paths`, {
-            params: { page, size, search, status_category, tool }
+            params: { page, size, search, status_category, tool, port }
         }).then((res) => res.data),
     triggerAction: (
         scanId: string,

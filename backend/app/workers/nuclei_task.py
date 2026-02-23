@@ -31,7 +31,9 @@ def run_nuclei_scan(self, scan_id: str, target_url: str, path_id: str = None, su
              scanner = Nuclei()
              # We can customize templates/severity here if needed
              results = await scanner.run(target_url)
-             
+            
+             print(f"[debug] scan results for {target_url}: {results}") # <--- 이 부분 추가
+
              # 3. Save Results
              if results:
                  for res in results:

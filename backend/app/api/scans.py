@@ -50,6 +50,7 @@ async def read_scan_paths(
     search: str = Query(None),
     status_category: str = Query(None),
     tool: str = Query(None),
+    port: str = Query(None),
     db: AsyncSession = Depends(get_db)
 ):
     """스캔에서 발견된 모든 경로(URL) 목록 조회"""
@@ -60,7 +61,8 @@ async def read_scan_paths(
         size,
         search=search,
         status_category=status_category,
-        tool=tool
+        tool=tool,
+        port=port
     )
 
 from app.schemas.vulnerability import VulnerabilityResponse

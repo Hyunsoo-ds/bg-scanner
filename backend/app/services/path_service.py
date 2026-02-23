@@ -89,7 +89,8 @@ async def get_paths_by_scan(
     size: int = 50,
     search: str = None,
     status_category: str = None, # 2xx, 3xx, 4xx, 5xx, none
-    tool: str = None
+    tool: str = None,
+    port: str = None
 ) -> PathListResponse: # Return PathListResponse instead of plain PaginatedResponse
     """스캔 ID 기준으로 경로 조회 (필터링 + 통계 포함)"""
     offset = (page - 1) * size
@@ -144,6 +145,27 @@ async def get_paths_by_scan(
 
     if tool and tool != "all":
         filter_conditions.append(Path.discovered_by == tool)
+
+    # Port filtering logic (URLs are stored as full strings)
+    if port and port != "all":
+        from sqlalchemy import or_
+        if port == "80":
+            filter_conditions.append(or_(
+                Path.url.like("%:80/%"),
+                Path.url.like("%:80"),
+                Path.url.like("http://%"), # implicit 80
+            ))
+        elif port == "443":
+            filter_conditions.append(or_(
+                Path.url.like("%:443/%"),
+                Path.url.like("%:443"),
+                Path.url.like("https://%"), # implicit 443
+            ))
+        else:
+            filter_conditions.append(or_(
+                Path.url.like(f"%:{port}/%"),
+                Path.url.like(f"%:{port}")
+            ))
 
     # Apply filters
     filtered_query = base_query

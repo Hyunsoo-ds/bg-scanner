@@ -85,19 +85,21 @@ function PathsTab({ scanId, scan }: { scanId: string; scan?: Scan }) {
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [toolFilter, setToolFilter] = useState<string>('all');
+    const [portFilter, setPortFilter] = useState<string>('all');
 
     const [page, setPage] = useState(1);
     const size = 50;
 
     const { data: pathsData, isLoading } = useQuery<PathListResponse>({
-        queryKey: ['paths', scanId, page, search, statusFilter, toolFilter],
+        queryKey: ['paths', scanId, page, search, statusFilter, toolFilter, portFilter],
         queryFn: () => scanApi.getPaths(
             scanId,
             page,
             size,
             search || undefined,
             statusFilter === 'all' ? undefined : statusFilter,
-            toolFilter === 'all' ? undefined : toolFilter
+            toolFilter === 'all' ? undefined : toolFilter,
+            portFilter === 'all' ? undefined : portFilter
         ),
         refetchInterval: (query) => {
             // 결과가 없으면 계속 폴링 (크롤러가 비동기로 완료되므로)
@@ -266,9 +268,21 @@ function PathsTab({ scanId, scan }: { scanId: string; scan?: Scan }) {
                     <option value="waybackurls">Waybackurls</option>
                     <option value="gau">GAU</option>
                 </select>
-                {(search || statusFilter !== 'all' || toolFilter !== 'all') && (
+                <select
+                    value={portFilter}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setPortFilter(e.target.value); setPage(1); }}
+                    className="text-sm border rounded-md px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                    <option value="all">All Ports</option>
+                    <option value="80">80 (http)</option>
+                    <option value="443">443 (https)</option>
+                    <option value="81">81</option>
+                    <option value="8080">8080</option>
+                    <option value="8443">8443</option>
+                </select>
+                {(search || statusFilter !== 'all' || toolFilter !== 'all' || portFilter !== 'all') && (
                     <button
-                        onClick={() => { setSearch(''); setStatusFilter('all'); setToolFilter('all'); setPage(1); }}
+                        onClick={() => { setSearch(''); setStatusFilter('all'); setToolFilter('all'); setPortFilter('all'); setPage(1); }}
                         className="text-xs text-muted-foreground hover:text-foreground underline"
                     >
                         Clear filters
@@ -311,8 +325,21 @@ function PathsTab({ scanId, scan }: { scanId: string; scan?: Scan }) {
                                     <td className="px-4 py-2.5 max-w-0">
                                         <TruncatedUrl url={p.url} />
                                         {/* 호스트 표시 */}
-                                        <span className="block text-xs text-muted-foreground mt-0.5 truncate">
-                                            {(() => { try { return new URL(p.url).hostname; } catch { return ''; } })()}
+                                        <span className="block text-xs text-muted-foreground mt-0.5 truncate gap-1">
+                                            {(() => {
+                                                try {
+                                                    const u = new URL(p.url);
+                                                    const port = u.port || (u.protocol === 'https:' ? '443' : '80');
+                                                    return (
+                                                        <span className="inline-flex items-center gap-1.5">
+                                                            <span>{u.protocol}//{u.hostname}</span>
+                                                            <span className="px-1 py-0 rounded-sm bg-blue-50 text-blue-700 border border-blue-100 font-mono text-[10px]">
+                                                                :{port}
+                                                            </span>
+                                                        </span>
+                                                    );
+                                                } catch { return ''; }
+                                            })()}
                                         </span>
                                     </td>
                                     <td className="px-4 py-2.5">
@@ -628,11 +655,12 @@ function SeverityBadge({ severity }: { severity?: string }) {
 // ── Vulnerabilities 탭 ───────────────────────────────────────────────────────
 function VulnerabilitiesTab({ scanId }: { scanId: string }) {
     const [page, setPage] = useState(1);
+    const [severityFilter, setSeverityFilter] = useState<string>('all');
     const size = 50;
 
     const { data: vulnsData, isLoading } = useQuery<PaginatedResponse<Vulnerability>>({
-        queryKey: ['vulnerabilities', scanId, page],
-        queryFn: () => scanApi.getVulnerabilities(scanId, page, size),
+        queryKey: ['vulnerabilities', scanId, page, severityFilter],
+        queryFn: () => scanApi.getVulnerabilities(scanId, page, size, severityFilter === 'all' ? undefined : severityFilter),
         refetchInterval: 5000,
     });
 
@@ -651,19 +679,39 @@ function VulnerabilitiesTab({ scanId }: { scanId: string }) {
 
     return (
         <div className="space-y-4">
+            {/* Filter Bar */}
+            <div className="flex flex-wrap gap-2 items-center">
+                <select
+                    value={severityFilter}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setSeverityFilter(e.target.value); setPage(1); }}
+                    className="text-sm border rounded-md px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                    <option value="all">All Severities</option>
+                    <option value="critical">Critical</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                    <option value="info">Info</option>
+                </select>
+            </div>
+
             <div className="bg-card border rounded-lg shadow-sm overflow-hidden">
                 <table className="w-full text-left text-sm">
                     <thead className="bg-muted text-muted-foreground text-xs uppercase tracking-wide">
                         <tr>
+                            <th className="px-4 py-3">Target URL</th>
                             <th className="px-4 py-3">Name</th>
                             <th className="px-4 py-3">Severity</th>
                             <th className="px-4 py-3">Matcher</th>
-                            <th className="px-4 py-3 w-[40%]">Description / Details</th>
+                            <th className="px-4 py-3 w-[35%]">Description / Details</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y">
                         {vulns.map(v => (
                             <tr key={v.id} className="hover:bg-muted/40 transition-colors">
+                                <td className="px-4 py-3 align-top max-w-0">
+                                    {v.path_url ? <TruncatedUrl url={v.path_url} /> : <span className="text-muted-foreground text-xs">—</span>}
+                                </td>
                                 <td className="px-4 py-3 font-medium align-top">{v.name}</td>
                                 <td className="px-4 py-3 align-top">
                                     <SeverityBadge severity={v.severity} />

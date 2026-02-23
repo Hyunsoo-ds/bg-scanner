@@ -76,7 +76,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "3000:80"
+      - "4005:80"
 
 volumes:
   pg_data:
